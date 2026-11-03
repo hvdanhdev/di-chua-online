@@ -5,7 +5,7 @@ import { Sound } from './audio.js';
 import { KINH } from './kinh.js';
 import { World } from './world.js';
 import { BeadsView } from './beads.js';
-import { makeAvatar, animateAvatar } from './avatar.js';
+import { makeAvatar, animateAvatar, setSeated, HERO_LIST, HERO_MAP, triggerUltimate } from './avatar.js';
 import { ic, injectIcons, ITEM_ICON, TYPE_ICON, EMOTES } from './icons.js';
 import { openMap } from './mapview.js';
 import { runChore, showGardenTrees, showPlants, CHORE_NAME, choreHint } from './chores.js';
@@ -18,7 +18,7 @@ const $ = (id) => document.getElementById(id);
 const $$ = (sel, el = document) => [...el.querySelectorAll(sel)];
 const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const fmt = (n) => Number(n || 0).toLocaleString('vi-VN');
-const show = (el, on = true) => (typeof el === 'string' ? $(el) : el).classList.toggle('hidden', !on);
+const show = (el, on = true) => (typeof el === 'string' ? $(el) : el)?.classList.toggle('hidden', !on);
 
 // Ghi lỗi gần nhất vào DOM để dễ chẩn đoán
 addEventListener('error', (e) => (document.body.dataset.err = `${e.message} @${e.filename}:${e.lineno}`));
@@ -384,7 +384,7 @@ function mailGiftPopup(lines, note) {
    HUD
    ===================================================================== */
 function renderHud() {
-  $('btnPet').classList.toggle('wait', !hasPet());
+  $('btnPet')?.classList.toggle('wait', !hasPet());
   const u = S.profile.user, sect = sectOf(u.sect);
   $('meName').textContent = u.name;
   $('meTitle').innerHTML = `${u.honor ? `<span class="honor-t">${esc(u.honor)}</span>` : esc(u.title)}${u.streak ? ` · ${ic('fire')}${u.streak}` : ''}`;
@@ -459,10 +459,46 @@ async function boot() {
 }
 
 /* =====================================================================
-   TẠO / SỬA NHÂN VẬT
+   TẠO / SỬA NHÂN VẬT (12 NHÂN VẬT 3D NARUTO × ONE PIECE)
    ===================================================================== */
-const setup = { step: 2, mode: 'new', ap: { gender: 'nam', hair: 'troc', skin: '#d98b5f' }, robe: 'ao_lam', sect: 'tinhdo', temple: null };
+const setup = { step: 2, mode: 'new', ap: { hero: 'luffy_g5', gender: 'nam', hair: 'ngan', skin: '#f5cba7' }, robe: 'ao_lam', sect: 'tinhdo', temple: null };
 let preview;
+
+// Tọa độ cắt ảnh tham khảo 4 cột x 3 hàng (characters-naruto-online.jpg)
+const HERO_SPRITE_POS = {
+  luffy_g5: '0% 0%',
+  naruto_sage: '33.33% 0%',
+  zoro: '66.66% 0%',
+  sasuke: '100% 0%',
+  sanji: '0% 50%',
+  kakashi: '33.33% 50%',
+  law: '66.66% 50%',
+  itachi: '100% 50%',
+  ace: '0% 100%',
+  shanks: '33.33% 100%',
+  minato: '66.66% 100%',
+  kaido: '100% 100%',
+};
+
+function renderHeroGrid(container, currentHero, onSelect) {
+  if (!container) return;
+  container.innerHTML = HERO_LIST.map((h) => `
+    <button type="button" class="hero-card ${h.id === currentHero ? 'on' : ''}" data-hero="${h.id}">
+      <span class="hc-thumb" style="background-position:${HERO_SPRITE_POS[h.id] || '0% 0%'}"></span>
+      <span class="hc-meta">
+        <b>${esc(h.name)}</b>
+        <small>${esc(h.series)} · ${esc(h.title)}</small>
+      </span>
+    </button>
+  `).join('');
+  $$('.hero-card', container).forEach((btn) => {
+    btn.onclick = () => {
+      const h = HERO_MAP[btn.dataset.hero] || HERO_LIST[0];
+      $$('.hero-card', container).forEach((x) => x.classList.toggle('on', x === btn));
+      onSelect(h);
+    };
+  });
+}
 
 function initPreview() {
   if (preview) return;
@@ -471,15 +507,17 @@ function initPreview() {
   r.setPixelRatio(Math.min(devicePixelRatio, 2));
   r.outputColorSpace = THREE.SRGBColorSpace;
   const scene = new THREE.Scene();
-  scene.add(new THREE.HemisphereLight('#fff1d8', '#4a2a14', 1.3));
-  const key = new THREE.DirectionalLight('#ffe2b0', 2.2); key.position.set(2, 4, -4); scene.add(key);
-  const rim = new THREE.PointLight('#ffb050', 8, 8); rim.position.set(-2, 2.5, 2); scene.add(rim);
-  const cush = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.16, 1.05), new THREE.MeshStandardMaterial({ color: '#3b3a3c' }));
-  cush.position.y = 0.08; scene.add(cush);
-  const halo = new THREE.Mesh(new THREE.CircleGeometry(1.6, 48), new THREE.MeshBasicMaterial({ color: '#f6c060', transparent: true, opacity: 0.12 }));
-  halo.position.set(0, 1.2, 0.8); scene.add(halo);
-  const cam = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
-  cam.position.set(0, 1.6, -4.4); cam.lookAt(0, 0.95, 0);
+  scene.add(new THREE.HemisphereLight('#fff6e5', '#3a4838', 1.45));
+  const key = new THREE.DirectionalLight('#ffe8b8', 2.4); key.position.set(2.2, 4.2, -4); scene.add(key);
+  const rim = new THREE.PointLight('#00f0ff', 7, 9); rim.position.set(-2.2, 2.5, 2.2); scene.add(rim);
+  const cush = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.85, 0.14, 32), new THREE.MeshStandardMaterial({ color: '#242b23', metalness: 0.5, roughness: 0.4 }));
+  cush.position.y = -0.07; scene.add(cush);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.8, 0.025, 8, 48), new THREE.MeshBasicMaterial({ color: '#ffd36b' }));
+  ring.rotation.x = Math.PI / 2; ring.position.y = 0.01; scene.add(ring);
+  const halo = new THREE.Mesh(new THREE.CircleGeometry(1.65, 48), new THREE.MeshBasicMaterial({ color: '#f6c060', transparent: true, opacity: 0.14 }));
+  halo.position.set(0, 1.15, 0.8); scene.add(halo);
+  const cam = new THREE.PerspectiveCamera(36, 1, 0.1, 50);
+  cam.position.set(0, 1.38, -4.2); cam.lookAt(0, 0.92, 0);
   preview = { r, scene, cam, av: null, rot: Math.PI, drag: null, halo };
   canvas.addEventListener('pointerdown', (e) => (preview.drag = e.clientX));
   addEventListener('pointerup', () => (preview.drag = null));
@@ -491,7 +529,7 @@ function initPreview() {
     const w = canvas.clientWidth, h = canvas.clientHeight;
     if (r.domElement.width !== Math.floor(w * r.getPixelRatio())) { r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
     if (preview.av) {
-      if (preview.drag === null) preview.rot += dt * 0.35;
+      if (preview.drag === null) preview.rot += dt * 0.45;
       preview.av.root.rotation.y = preview.rot;
       animateAvatar(preview.av, dt, clock.elapsedTime, false);
     }
@@ -501,14 +539,20 @@ function initPreview() {
   };
   preview.loop = loop;
 }
-function rebuildPreview() {
+function rebuildPreview(playAction = false) {
   if (!preview) return;
   if (preview.av) preview.scene.remove(preview.av.root);
   const robe = S.items[setup.robe]?.data;
   const beads = S.items[S.profile?.user?.equipped?.beads || 'chuoi_go']?.data;
-  preview.av = makeAvatar({ appearance: setup.ap, robe: robe && { color: robe.color, sash: robe.sash }, beads });
-  preview.av.meditating = true;
+  const heroId = setup.ap.hero || 'luffy_g5';
+  const heroDef = HERO_MAP[heroId] || HERO_LIST[0];
+  preview.av = makeAvatar({ hero: heroId, appearance: setup.ap, robe: robe && { color: robe.color, sash: robe.sash }, beads });
+  setSeated(preview.av, false);
+  preview.av.meditating = false;
+  if (playAction) triggerUltimate(preview.av);
   preview.scene.add(preview.av.root);
+  const badge = $('previewHeroBadge');
+  if (badge) badge.innerHTML = `🦸 Nhân vật 3D: <b>${esc(heroDef.name)}</b> (${esc(heroDef.title)}) · Kéo để xoay 360°`;
 }
 
 function chipGroup(id, value, onPick) {
@@ -623,17 +667,26 @@ function openSetup(mode) {
   setup.step = 2;
   if (mode === 'edit') {
     const u = S.profile.user;
-    setup.ap = { ...u.appearance };
+    setup.ap = { hero: 'luffy_g5', ...u.appearance };
     setup.robe = u.equipped.robe;
     $('fName').value = u.name;
     setup.nameSig = '';
-  } else if (!setup.nameSig) grantName();
+  } else {
+    setup.ap.hero ||= 'luffy_g5';
+    if (!setup.nameSig) grantName();
+  }
   $('fName').readOnly = false;
   const hint0 = $('fNameHint'); if (hint0) hint0.textContent = '';
   if (mode === 'edit') loadNameRule(); else show('btnDice');
   S.view = 'setup';
   show('hud', false); show('setup');
   initPreview(); rebuildPreview(); requestAnimationFrame(preview.loop);
+  renderHeroGrid($('fHeroGrid'), setup.ap.hero, (h) => {
+    setup.ap.hero = h.id;
+    setup.ap.skin = h.skin;
+    Sound.chime?.();
+    rebuildPreview(true);
+  });
   chipGroup('fGender', setup.ap.gender, (v) => (setup.ap.gender = v));
   chipGroup('fHair', setup.ap.hair, (v) => (setup.ap.hair = v));
   chipGroup('fRobe', setup.robe, (v) => (setup.robe = v));
@@ -641,8 +694,8 @@ function openSetup(mode) {
   show('btnRestore', mode === 'new');
   show('fSectWrap', mode === 'new');
   show('consentWrap', mode === 'new');
-  $('setupTitle').textContent = mode === 'edit' ? 'Sửa nhân vật' : 'Tạo nhân vật';
-  $('fMore').open = true;
+  $('setupTitle').textContent = mode === 'edit' ? 'Đổi Hoá Thân 3D & Hồ Sơ' : 'Chọn Nhân Vật 3D & Vào Chùa';
+  $('fMore').open = false;
   $('fSkin').innerHTML = S.meta.appearance.skin.map((c) => `<button data-v="${c}" style="background:${c}" class="${c === setup.ap.skin ? 'on' : ''}"></button>`).join('');
   $$('#fSkin button').forEach((b) => (b.onclick = () => { setup.ap.skin = b.dataset.v; $$('#fSkin button').forEach((x) => x.classList.toggle('on', x === b)); rebuildPreview(); }));
   renderSetupStep();
@@ -668,11 +721,9 @@ function renderSetupStep() {
   }
 }
 const SERVERS = [
-  { host: 'chua-online', path: '../chua-online/index.html', also: [], name: '🪷 Đi Chùa Online (Bản Cũ Tịnh Tâm Truyền Thống)', desc: '15 danh lam cổ tự Việt Nam · Lễ Phật, tụng kinh, thả đèn hoa đăng' },
-  { host: 'chua-xoa-stress', path: '../chua-xoa-stress/index.html', also: [], name: '🔥 Đi Chùa Xõa Stress 3D (Sansa UI × 12 Tướng Naruto/One Piece)', desc: 'Bản Mới: Sàn DJ Chú Đại Bi Remix, Đấm Bốc Xả Nghiệp & 12 Nhân Vật 3D' },
-  { host: 'portal', path: '../index.html', also: [], name: '✨ Cổng So Sánh 2 Phiên Bản & Review UI/UX', desc: 'Trang chủ đặt 2 phiên bản cạnh nhau để đối chiếu thiết kế' },
+  { host: 'chua-xoa-stress', path: './index.html', also: [], name: '🔥 Đi Chùa Xõa Stress 3D – Sansa UI × 12 Nhân Vật 3D', desc: 'Sàn DJ Chú Đại Bi Remix, Đấm Bốc Xả Nghiệp, Đại Mõ Phản Lực & 12 Nhân Vật 3D' },
 ];
-const serverHere = (s) => s.host === 'chua-online';
+const serverHere = (s) => s.host === 'chua-xoa-stress';
 const serverUrl = (s) => s.path || '../index.html';
 // Chùa hay máy chủ đầy thì mời sang máy chủ kia; mỗi máy chủ có tiến độ riêng nên phải nói rõ trước khi đi
 function serverSwitch() {
@@ -1098,6 +1149,9 @@ async function enterTemple(id) {
     S.world.tellerInfo = (t) => (S.content?.tales?.[t.id] || []).map(({ name, role }) => ({ name, role }));
     S.world.setShowNpc(local.get('npc', true));
     S.world.setShowNames(local.get('names', true));
+    S.world.onBagHit = (bagDef) => onStressBagPunched(bagDef);
+    S.world.onGiantMuyuHit = () => onHyperMuyuStruck();
+    S.world.onDjStageTap = () => activateDjStage();
   }
   stopBowing(true);
   showLoader(`Đang về ${t.name}`);
@@ -1880,7 +1934,7 @@ setInterval(async () => {
    DÂNG LỄ & ĐÈN HOA ĐĂNG
    ===================================================================== */
 const hasPet = () => Object.keys(S.profile?.inventory || {}).some((id) => S.items[id]?.type === 'pet' && qty(id) > 0);
-$('btnPet').onclick = () => {
+if ($('btnPet')) $('btnPet').onclick = () => {
   if (hasPet()) return openSheet('bag', 'pet');
   modal(`<div class="big">${ic('pet')}</div><h3>Bạn chưa có linh thú</h3>
     <p>Thỉnh linh thú ở Cửa hàng, làm nhiệm vụ để tích Ngọc, hoặc ra sân chùa đi tới gần linh thú để kết duyên.</p>
@@ -3605,5 +3659,266 @@ if ($('btnRoomShare')) {
     });
   };
 }
+
+/* ============================================================================
+   HỆ THỐNG XÕA STRESS TRONG CHÙA (SANSA TEMPLE UI/UX × 12 TƯỚNG 3D NARUTO/ONE PIECE)
+   - Sàn DJ Ánh Trăng (Chú Đại Bi Vinahouse / Tâm Kinh Lo-Fi / Trống Giải Phóng Gear 5)
+   - Võ Đài Đấm Bốc Xả Nghiệp (Đấm 5 Bao Cát: Deadline, Sếp Khó Tính, Overthinking…)
+   - Đại Mõ Neon Phản Lực (Gõ liên thanh tích Combo & giảm Stress về 0% Giác Ngộ)
+   ============================================================================ */
+const stressState = {
+  pct: 75,
+  combo: 0,
+  comboTimer: null,
+  djIndex: 0,
+  enlightenedCount: 0,
+};
+
+const DJ_TRACKS = [
+  { id: 'zen', label: 'Đài Ánh Trăng: Nhạc Thiền Chánh Điện · Chạm để bật DJ Remix', short: '🪷 Nhạc Thiền Chánh Điện' },
+  { id: 'vinahouse', label: '🎧 Đang phát: Chú Đại Bi Vinahouse Remix (136 BPM) · Quẩy Xõa Stress!', short: '🎧 Chú Đại Bi Vinahouse' },
+  { id: 'lofi', label: '🌙 Đang phát: Tâm Kinh Lo-Fi Chillhop (92 BPM) · Chữa Lành Tâm Hồn', short: '🌙 Tâm Kinh Lo-Fi Chillhop' },
+  { id: 'nika', label: '🥁 Đang phát: Trống Giải Phóng Nika Gear 5 (126 BPM) · Chiến Thần Tự Do', short: '🥁 Trống Giải Phóng Gear 5' },
+];
+
+function updateStressUi(delta = 0, reason = '') {
+  stressState.pct = Math.max(0, Math.min(100, stressState.pct + delta));
+  if (delta < 0) {
+    stressState.combo++;
+    clearTimeout(stressState.comboTimer);
+    stressState.comboTimer = setTimeout(() => {
+      stressState.combo = 0;
+      const cb = $('comboBadge');
+      if (cb) cb.classList.add('hidden');
+    }, 3500);
+  }
+  const fill = $('stressFill');
+  const status = $('stressStatus');
+  const cb = $('comboBadge');
+  if (fill) {
+    fill.style.width = `${stressState.pct}%`;
+    fill.style.background = stressState.pct > 55
+      ? 'linear-gradient(90deg, #ef4444, #f97316)'
+      : stressState.pct > 20
+        ? 'linear-gradient(90deg, #f59e0b, #eab308)'
+        : 'linear-gradient(90deg, #10b981, #06b6d4)';
+  }
+  if (status) {
+    if (stressState.pct === 0) {
+      status.innerHTML = '✨ Trạng thái: <b style="color:#4ade80">0% ÁP LỰC · TÂM BẤT BIẾN GIÁC NGỘ!</b>';
+    } else if (stressState.pct <= 30) {
+      status.innerHTML = `🌿 Tâm đang nhẹ dần: <b id="stressPct">${stressState.pct}%</b>`;
+    } else {
+      status.innerHTML = `🔥 Áp lực trần gian: <b id="stressPct">${stressState.pct}%</b>`;
+    }
+  }
+  if (cb) {
+    if (stressState.combo >= 2) {
+      cb.classList.remove('hidden');
+      cb.textContent = `⚡ COMBO x${stressState.combo}`;
+      cb.animate([{ transform: 'scale(1.28)' }, { transform: 'scale(1)' }], { duration: 180 });
+    } else {
+      cb.classList.add('hidden');
+    }
+  }
+  if (reason) floater(reason);
+
+  // Khi xả hết 100% áp lực về 0% -> Thưởng Giác Ngộ Hoan Hỷ!
+  if (stressState.pct === 0 && delta < 0) {
+    stressState.enlightenedCount++;
+    Sound.success?.();
+    petalShower(42, ['🪷', '✨', '🔥', '🎧', '🥊', '🌸']);
+    S.world?.glow(S.profile?.user?.id);
+    post('/practice', { type: 'mo', count: 10, lite: true, temple: S.temple?.id || 'nhattru' }).then((r) => handleResult(r, { silent: true })).catch(() => {});
+    toast('✨ <b>TÂM BẤT BIẾN GIỮA DÒNG ĐỜI VẠN BIẾN!</b> Bạn đã xả sạch 100% Stress · Nhận +50 Công Đức & Hoa Sen Vàng!', 5000);
+    setTimeout(() => {
+      stressState.pct = 65;
+      updateStressUi(0);
+    }, 6000);
+  }
+}
+
+function setActiveZonePill(zoneKey) {
+  $$('#customBar [data-zone]').forEach((b) => b.classList.toggle('on', b.dataset.zone === zoneKey));
+}
+
+function cycleDjTrack(forceTrackId) {
+  if (forceTrackId) {
+    const idx = DJ_TRACKS.findIndex((t) => t.id === forceTrackId);
+    stressState.djIndex = idx >= 0 ? idx : 1;
+  } else {
+    stressState.djIndex = (stressState.djIndex + 1) % DJ_TRACKS.length;
+  }
+  const tr = DJ_TRACKS[stressState.djIndex];
+  Sound.setDjTrack(tr.id);
+  const lbl = $('djTrackLabel');
+  if (lbl) lbl.textContent = tr.label;
+  const radioBtn = $('btnDjTrack');
+  if (radioBtn) radioBtn.classList.toggle('playing', tr.id !== 'zen');
+  return tr;
+}
+
+function activateDjStage() {
+  if (!S.world) return;
+  stopBowing(true);
+  setActiveZonePill('dj');
+  const isDancing = S.world.player?.dancing;
+  if (!isDancing) {
+    S.world.toggleDjDance(true);
+    if (Sound.djTrack === 'zen') cycleDjTrack('vinahouse');
+    $('btnDjDance')?.classList.add('on');
+    if ($('djDanceLabel')) $('djDanceLabel').textContent = 'Đang Quẩy';
+    updateStressUi(-10, '🎧 Quẩy Chú Đại Bi Remix! -10% Stress · +5 Công Đức');
+    toast('🎧 <b>Sàn DJ Ánh Trăng đã bật!</b> Nhân vật 3D đang quẩy theo nhịp Chú Đại Bi Vinahouse. Bấm đài nhạc phía trên để đổi bài!');
+  } else {
+    const tr = cycleDjTrack();
+    if (tr.id === 'zen') {
+      S.world.toggleDjDance(false);
+      $('btnDjDance')?.classList.remove('on');
+      if ($('djDanceLabel')) $('djDanceLabel').textContent = 'Quẩy DJ';
+      toast('🪷 Đã tắt Sàn DJ, trở về không gian Chánh điện thanh tịnh.');
+    } else {
+      updateStressUi(-8, `${tr.short} · -8% Stress`);
+      toast(`🎵 Đổi đĩa DJ: <b>${tr.short}</b>`);
+    }
+  }
+}
+
+function onStressBagPunched(bagDef) {
+  const crit = stressState.combo > 0 && stressState.combo % 4 === 0;
+  Sound.punchSfx(crit);
+  setActiveZonePill('boxing');
+  const heroId = S.profile?.user?.appearance?.hero || 'luffy_g5';
+  const hero = HERO_MAP[heroId] || HERO_LIST[0];
+  const drop = crit ? -15 : -8;
+  const targetName = bagDef?.name || 'NGHIỆP CHƯỚNG';
+  updateStressUi(drop, `${crit ? '💥 BẠO KÍCH' : '🥊 ĐẤM BAY'} [${targetName}] · ${drop}% Stress!`);
+  if (stressState.combo % 3 === 0 && S.temple) {
+    post('/practice', { type: 'mo', count: 3, lite: true, temple: S.temple.id }).then((r) => handleResult(r, { silent: true })).catch(() => {});
+  }
+}
+
+function onHyperMuyuStruck() {
+  Sound.hyperMuyuSfx(stressState.combo + 1);
+  setActiveZonePill('muyu');
+  updateStressUi(-6, `🥁 ĐẠI MÕ PHẢN LỰC x${stressState.combo + 1} · -6% Stress · +1 Công Đức`);
+  if (stressState.combo % 4 === 0 && S.temple) {
+    post('/practice', { type: 'mo', count: 2, lite: true, temple: S.temple.id }).then((r) => handleResult(r, { silent: true })).catch(() => {});
+  }
+}
+
+// Gắn sự kiện cho các nút Khu vực (Sansa Zone Travel)
+$$('#customBar [data-zone]').forEach((btn) => {
+  btn.onclick = () => {
+    const z = btn.dataset.zone;
+    if (!S.world) return;
+    stopBowing(true);
+    setActiveZonePill(z);
+    S.world.teleportToZone(z);
+    if (z === 'dj') {
+      if (Sound.djTrack === 'zen') cycleDjTrack('vinahouse');
+      $('btnDjDance')?.classList.add('on');
+      if ($('djDanceLabel')) $('djDanceLabel').textContent = 'Đang Quẩy';
+      updateStressUi(-10, '🎧 Lên Sàn DJ Xõa Stress! -10% Áp lực');
+      toast('🎧 Đã đến <b>Sàn DJ Ánh Trăng</b>! Chạm để đổi bài Chú Đại Bi Remix / Tâm Kinh Lo-Fi.');
+    } else if (z === 'boxing') {
+      $('btnDjDance')?.classList.remove('on');
+      if ($('djDanceLabel')) $('djDanceLabel').textContent = 'Quẩy DJ';
+      S.world.punchStressBag(0);
+      toast('🥊 Đã lên <b>Võ Đài Đấm Bốc Xả Nghiệp</b>! Chạm trực tiếp vào 5 Bao Cát hoặc bấm nút Đấm Xả Giận!');
+    } else if (z === 'muyu') {
+      $('btnDjDance')?.classList.remove('on');
+      if ($('djDanceLabel')) $('djDanceLabel').textContent = 'Quẩy DJ';
+      S.world.hitHyperMuyu();
+      toast('🥁 Đã tới <b>Đại Mõ Neon Phản Lực</b>! Bấm liên tục để tích Combo xả stress!');
+    } else {
+      Sound.setDjTrack('zen');
+      const lbl = $('djTrackLabel');
+      if (lbl) lbl.textContent = DJ_TRACKS[0].label;
+      $('btnDjTrack')?.classList.remove('playing');
+      $('btnDjDance')?.classList.remove('on');
+      if ($('djDanceLabel')) $('djDanceLabel').textContent = 'Quẩy DJ';
+      Sound.chime?.();
+      toast('🏯 Đã về giữa <b>Chánh Điện Thanh Tịnh</b>.');
+    }
+  };
+});
+
+if ($('btnDjTrack')) {
+  $('btnDjTrack').onclick = () => {
+    const tr = cycleDjTrack();
+    if (tr.id !== 'zen') {
+      S.world?.toggleDjDance(true);
+      $('btnDjDance')?.classList.add('on');
+      if ($('djDanceLabel')) $('djDanceLabel').textContent = 'Đang Quẩy';
+      updateStressUi(-5, `🎵 Bật ${tr.short}`);
+    } else {
+      S.world?.toggleDjDance(false);
+      $('btnDjDance')?.classList.remove('on');
+      if ($('djDanceLabel')) $('djDanceLabel').textContent = 'Quẩy DJ';
+    }
+    toast(`🎵 ${tr.short}`);
+  };
+}
+
+if ($('btnDjDance')) {
+  $('btnDjDance').onclick = () => {
+    if (!S.world) return;
+    S.world.teleportToZone('dj');
+    activateDjStage();
+  };
+}
+
+if ($('btnPunch')) {
+  $('btnPunch').onclick = () => {
+    if (!S.world) return;
+    stopBowing(true);
+    S.world.punchStressBag();
+  };
+}
+
+if ($('btnHyperMuyu')) {
+  $('btnHyperMuyu').onclick = () => {
+    if (!S.world) return;
+    stopBowing(true);
+    S.world.hitHyperMuyu();
+  };
+}
+
+// Đổi nhanh giữa 12 Nhân Vật 3D Naruto & One Piece ngay trong chùa
+function openHeroSwitcherModal() {
+  const curHero = S.profile?.user?.appearance?.hero || 'luffy_g5';
+  modal(`
+    <div class="hero-modal">
+      <h3>🦸 Chọn Hoá Thân 3D (Naruto × One Piece)</h3>
+      <p class="muted">Toàn bộ 12 nhân vật được dựng mô hình 3D Chibi trực tiếp kèm vũ khí, hào quang &amp; tuyệt chiêu riêng.</p>
+      <div class="hero-grid modal-hero-grid" id="mHeroGrid"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn ghost" id="mHeroEdit">Đổi tên / Chi tiết</button>
+        <button class="btn gold" id="mHeroClose">Hoàn tất</button>
+      </div>
+    </div>
+  `, (el) => {
+    renderHeroGrid(el.querySelector('#mHeroGrid'), curHero, async (h) => {
+      try {
+        const newAp = { ...(S.profile?.user?.appearance || {}), hero: h.id, skin: h.skin };
+        const res = await api('/me', { method: 'PUT', body: { appearance: newAp } });
+        setProfile(res);
+        if (S.world?.player) triggerUltimate(S.world.player);
+        Sound.success?.();
+        toast(`🦸 Đã hoá thân thành <b>${esc(h.name)}</b> (${esc(h.title)})!`);
+      } catch (err) {
+        toast(err.message);
+      }
+    });
+    el.querySelector('#mHeroClose').onclick = closeModal;
+    el.querySelector('#mHeroEdit').onclick = () => { closeModal(); openSetup('edit'); };
+  });
+}
+
+if ($('btnHeroSwitch')) {
+  $('btnHeroSwitch').onclick = openHeroSwitcherModal;
+}
+
 
 

@@ -43,8 +43,7 @@ window.__STATIC_CONTENT__ = ${contentJson.trim()};
 })();
 `;
   fs.writeFileSync(path.join(jsDir, 'file-bundle.js'), bundleJs, 'utf8');
-  console.log('Built file-bundle.js for', path.basename(appDir));
+  console.log('Built js/file-bundle.js for Đi Chùa Xõa Stress 3D');
 }
 
-buildAppBundle(path.join(__dirname, 'chua-online'));
-buildAppBundle(path.join(__dirname, 'chua-xoa-stress'));
+buildAppBundle(__dirname);
