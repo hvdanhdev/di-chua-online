@@ -492,9 +492,12 @@ export class World {
     av.upper.add(marker); av.marker = marker;
     av.onBow = () => this.onBow?.();
     if (old) {
+      av.groundY = old.groundY || 0;
       av.root.position.copy(old.root.position);
       av.root.rotation.y = old.root.rotation.y;
       setSeated(av, old.seated);
+      if (old.dancing) setDancing(av, true);
+      if (old.boxingMode) setBoxingGloves(av, true);
       av.bowing = old.bowing; av.bowT = old.bowT; av.meditating = old.meditating;
       disposeAvatar(old);
     }
@@ -509,15 +512,15 @@ export class World {
     const free = this.temple.cushions.filter((c) => !c.occupant);
     free.sort(() => Math.random() - 0.5);
     for (let i = 0; i < Math.min(n, free.length - 2); i++) this.addNpc(free[i], i);
-    // Thêm DJ Kakashi trên Bàn DJ & Võ Sĩ Ace ở Đài Đấm Bốc
+    // Thêm DJ Kakashi, Đội nhảy Pháp Phục Sansa (dance-sleeves) & Võ Sĩ Ace ở Quảng Trường Sân Chùa Ngoài Trời
     if (this.temple.stressZones) {
       const djZ = this.temple.stressZones.dj;
-      const djNpc = makeAvatar({ hero: 'kakashi', appearance: { hero: 'kakashi' } });
+      const djNpc = makeAvatar({ hero: 'kakashi', outfit: 'dj_rave', groundY: djZ.pos.y, appearance: { hero: 'kakashi', outfit: 'dj_rave' } });
       setSeated(djNpc, false);
       setDancing(djNpc, true);
-      djNpc.root.scale.setScalar(AV_SCALE * 1.04);
-      djNpc.root.position.set(djZ.pos.x - 2.35, 0.2, djZ.pos.z - 0.3);
-      djNpc.root.rotation.y = -Math.PI / 2;
+      djNpc.root.scale.setScalar(AV_SCALE * 1.05);
+      djNpc.root.position.set(djZ.pos.x, djZ.pos.y, djZ.pos.z - 2.35);
+      djNpc.root.rotation.y = Math.PI;
       djNpc.npc = true; djNpc.isStageNpc = true;
       const djLbl = new THREE.Sprite(new THREE.SpriteMaterial({ map: labelTex('DJ Kakashi', '🎧 Chú Đại Bi Vinahouse', '#00f0ff'), depthWrite: false, transparent: true }));
       djLbl.scale.set(1.65 / AV_SCALE, 0.42 / AV_SCALE, 1); djLbl.position.y = 2.15;
@@ -525,13 +528,33 @@ export class World {
       this.scene.add(djNpc.root);
       this.npcs.push(djNpc);
 
+      // 2 Đạo hữu mặc Pháp Phục Sansa Hàn Quốc (tay áo rộng dance-sleeves) quẩy trên sàn DJ ngoài sân
+      const partyDancers = [
+        { hero: 'luffy_g5', outfit: 'sansa_sage', name: 'Thần Nika (Pháp Phục Sansa)', sub: '🍃 Vũ Điệu Tay Áo Rộng 108 BPM', dx: -1.18, dz: -0.25, yaw: 0.25 },
+        { hero: 'minato', outfit: 'sansa_lotus', name: 'Tia Chớp Vàng (Sansa Maru)', sub: '🌸 Pháp Phục Hồng Sen Hàn Quốc', dx: 1.18, dz: -0.25, yaw: -0.25 },
+      ];
+      for (const pd of partyDancers) {
+        const dNpc = makeAvatar({ hero: pd.hero, outfit: pd.outfit, groundY: djZ.pos.y, appearance: { hero: pd.hero, outfit: pd.outfit } });
+        setSeated(dNpc, false);
+        setDancing(dNpc, true);
+        dNpc.root.scale.setScalar(AV_SCALE);
+        dNpc.root.position.set(djZ.pos.x + pd.dx, djZ.pos.y, djZ.pos.z + pd.dz);
+        dNpc.root.rotation.y = pd.yaw;
+        dNpc.npc = true; dNpc.isStageNpc = true; dNpc.isOutdoorPartyNpc = true;
+        const pLbl = new THREE.Sprite(new THREE.SpriteMaterial({ map: labelTex(pd.name, pd.sub, '#f4c2af'), depthWrite: false, transparent: true, opacity: 0.9 }));
+        pLbl.scale.set(1.65 / AV_SCALE, 0.40 / AV_SCALE, 1); pLbl.position.y = 2.1;
+        dNpc.root.add(pLbl); dNpc.label = pLbl;
+        this.scene.add(dNpc.root);
+        this.npcs.push(dNpc);
+      }
+
       const bxZ = this.temple.stressZones.boxing;
-      const bxNpc = makeAvatar({ hero: 'ace', appearance: { hero: 'ace' } });
+      const bxNpc = makeAvatar({ hero: 'ace', outfit: 'boxing_champ', groundY: bxZ.pos.y, appearance: { hero: 'ace', outfit: 'boxing_champ' } });
       setSeated(bxNpc, false);
       setBoxingGloves(bxNpc, true);
-      bxNpc.root.scale.setScalar(AV_SCALE * 1.04);
-      bxNpc.root.position.set(bxZ.pos.x + 0.5, 0.18, bxZ.pos.z - 1.15);
-      bxNpc.root.rotation.y = Math.PI / 2;
+      bxNpc.root.scale.setScalar(AV_SCALE * 1.05);
+      bxNpc.root.position.set(bxZ.pos.x - 1.68, bxZ.pos.y, bxZ.pos.z - 0.18);
+      bxNpc.root.rotation.y = 0;
       bxNpc.npc = true; bxNpc.isBoxerNpc = true; bxNpc.nextPunch = 2.5;
       const bxLbl = new THREE.Sprite(new THREE.SpriteMaterial({ map: labelTex('Hỏa Quyền Ace', '🥊 HLV Đấm Bốc Xả Nghiệp', '#ff6b4a'), depthWrite: false, transparent: true }));
       bxLbl.scale.set(1.75 / AV_SCALE, 0.42 / AV_SCALE, 1); bxLbl.position.y = 2.15;
@@ -542,7 +565,7 @@ export class World {
   }
   addNpc(cu, idx = 0) {
     const heroDef = HERO_LIST[(idx + Math.floor(Math.random() * HERO_LIST.length)) % HERO_LIST.length];
-    const av = makeAvatar({ hero: heroDef.id, appearance: { hero: heroDef.id, skin: heroDef.skin } });
+    const av = makeAvatar({ hero: heroDef.id, autoSansaOutfit: true, appearance: { hero: heroDef.id, skin: heroDef.skin } });
     av.root.scale.setScalar(AV_SCALE);
     av.npc = true; av.cushion = cu; cu.occupant = av;
     av.root.position.set(cu.pos.x, av.baseY, cu.pos.z);
@@ -551,7 +574,7 @@ export class World {
     av.bowSlow = rand(1.8, 2.6); // NPC lạy chậm rãi, mỗi người một nhịp
     av.nextChange = rand(8, 30);
     av.npcName = `${heroDef.name} (${phapDanh(this.npcNames ||= new Set())})`;
-    const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: labelTex(av.npcName, heroDef.title, '#d9c9a8'), depthWrite: false, transparent: true, opacity: 0.85 }));
+    const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: labelTex(av.npcName, `${av.outfit?.name || heroDef.title}`, '#d9c9a8'), depthWrite: false, transparent: true, opacity: 0.85 }));
     label.scale.set(1.45 / AV_SCALE, 0.34 / AV_SCALE, 1); label.position.y = 1.95; label.visible = false;
     av.root.add(label); av.label = label;
     av.root.visible = this.showNpc;
@@ -875,10 +898,16 @@ export class World {
       this.hitHyperMuyu();
       return;
     }
-    // Chạm vào Sàn DJ Ánh Trăng?
+    // Chạm vào Sàn DJ Ánh Trăng ngoài sân chùa?
     if (this.temple.djStageMesh && this.ray.intersectObject(this.temple.djStageMesh, false).length) {
       this.teleportToZone('dj');
       this.onDjStageTap?.();
+      return;
+    }
+    // Chạm vào sàn Võ Đài Đấm Bốc ngoài sân chùa?
+    if (this.temple.boxStageMesh && this.ray.intersectObject(this.temple.boxStageMesh, false).length) {
+      this.teleportToZone('boxing');
+      this.punchStressBag();
       return;
     }
     // chạm vào thầy trụ trì?
@@ -1170,7 +1199,10 @@ export class World {
       if (y !== null && y !== undefined) this.groundY = y;
       P.root.rotation.y = lerpAngle(P.root.rotation.y, Math.atan2(-mx, -mz), Math.min(1, dt * 10));
     }
-    if (!this.seat) P.baseY = (this.groundY || 0);
+    if (!this.seat) {
+      P.groundY = this.groundY || 0;
+      P.baseY = P.groundY;
+    }
     this.checkDoorTrip(dt);
     this.updateFog();
     animateAvatar(P, dt, time, this.moving);
@@ -1395,21 +1427,25 @@ export class World {
     return n;
   }
 
-  /* ---------------- KHU VỰC XÕA STRESS (SANSA × NARUTO/ONE PIECE 3D) ---------------- */
+  /* ---------------- KHU VỰC XÕA STRESS NGOÀI SÂN CHÙA (SANSA MARU × NARUTO/ONE PIECE 3D) ---------------- */
   teleportToZone(zoneKey = 'hall') {
     if (!this.temple?.stressZones || !this.player) return null;
     const z = this.temple.stressZones[zoneKey] || this.temple.stressZones.hall;
     if (this.seat) this.stand();
     this.walkTarget = null;
     this.walkPath = null;
+    this.doorTrip = null;
+    const gy = z.pos.y || 0;
+    this.groundY = gy;
+    this.player.groundY = gy;
+    this.player.baseY = gy;
     this.player.root.position.copy(z.pos);
-    this.groundY = 0;
-    this.player.baseY = 0;
-    this.player.root.rotation.y = z.yaw;
-    this.cam.yaw = z.yaw;
+    this.player.root.rotation.y = z.yaw ?? 0;
+    this.cam.yaw = z.yaw ?? 0;
     this.cam.pitch = 0.22;
-    this.cam.dist = zoneKey === 'hall' ? 5.8 : 4.6;
+    this.cam.dist = zoneKey === 'hall' ? 5.8 : 4.8;
     this.cam.lastUser = performance.now();
+    this.updateFog();
     // Chuyển trạng thái theo khu vực
     if (zoneKey === 'dj') {
       this.toggleDjDance(true);
@@ -1431,11 +1467,10 @@ export class World {
     if (on && this.seat) this.stand();
     setDancing(this.player, on);
     this.temple?.setDjParty?.(on);
-    // Cho các NPC gần đó nhún nhảy theo
-    this.npcs.forEach((n, i) => {
-      if (!n.isBoxerNpc && !n.isStageNpc && i % 2 === 0) {
-        if (on) { setSeated(n, false); setDancing(n, true); }
-        else { setDancing(n, false); setSeated(n, true); }
+    // Cho các NPC ở Sàn DJ ngoài sân chùa nhún nhảy cuồng nhiệt (giữ nguyên sự thanh tịnh trong Chánh Điện)
+    this.npcs.forEach((n) => {
+      if (n.isOutdoorPartyNpc) {
+        setDancing(n, true);
       }
     });
     return on;
@@ -1444,17 +1479,21 @@ export class World {
   punchStressBag(bagIdx) {
     if (!this.temple || !this.player) return null;
     if (this.seat) this.stand();
+    this.doorTrip = null;
     const bz = this.temple.stressZones?.boxing;
-    if (bz && this.player.root.position.distanceTo(bz.pos) > 3.2) {
+    if (bz && this.player.root.position.distanceTo(bz.pos) > 3.4) {
+      const gy = bz.pos.y || 0;
+      this.groundY = gy;
+      this.player.groundY = gy;
+      this.player.baseY = gy;
       this.player.root.position.copy(bz.pos);
-      this.groundY = 0;
-      this.player.baseY = 0;
-      this.cam.yaw = bz.yaw;
-      this.cam.dist = 4.5;
+      this.cam.yaw = bz.yaw ?? 0;
+      this.cam.dist = 4.6;
+      this.updateFog();
     }
     setDancing(this.player, false);
     setBoxingGloves(this.player, true);
-    this.player.root.rotation.y = -Math.PI / 2;
+    this.player.root.rotation.y = 0; // hướng về phía 5 bao cát trước mặt
     triggerUltimate(this.player);
     const idx = bagIdx !== undefined ? bagIdx : Math.floor(Math.random() * 5);
     const bagDef = this.temple.hitBag?.(idx, 1.25);
@@ -1465,14 +1504,18 @@ export class World {
   hitHyperMuyu() {
     if (!this.temple || !this.player) return;
     if (this.seat) this.stand();
+    this.doorTrip = null;
     const mz = this.temple.stressZones?.muyu;
-    if (mz && this.player.root.position.distanceTo(mz.pos) > 3.4) {
+    if (mz && this.player.root.position.distanceTo(mz.pos) > 3.6) {
+      const gy = mz.pos.y || 0;
+      this.groundY = gy;
+      this.player.groundY = gy;
+      this.player.baseY = gy;
       this.player.root.position.copy(mz.pos);
-      this.groundY = 0;
-      this.player.baseY = 0;
-      this.cam.yaw = mz.yaw;
+      this.cam.yaw = mz.yaw ?? 0;
+      this.updateFog();
     }
-    this.player.root.rotation.y = -0.35;
+    this.player.root.rotation.y = 0;
     triggerUltimate(this.player);
     this.temple.hitGiantMuyu?.();
     this.onGiantMuyuHit?.();

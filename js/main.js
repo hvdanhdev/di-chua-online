@@ -5,7 +5,7 @@ import { Sound } from './audio.js';
 import { KINH } from './kinh.js';
 import { World } from './world.js';
 import { BeadsView } from './beads.js';
-import { makeAvatar, animateAvatar, setSeated, HERO_LIST, HERO_MAP, triggerUltimate } from './avatar.js';
+import { makeAvatar, animateAvatar, setSeated, setDancing, HERO_LIST, HERO_MAP, OUTFIT_LIST, OUTFIT_MAP, triggerUltimate } from './avatar.js';
 import { ic, injectIcons, ITEM_ICON, TYPE_ICON, EMOTES } from './icons.js';
 import { openMap } from './mapview.js';
 import { runChore, showGardenTrees, showPlants, CHORE_NAME, choreHint } from './chores.js';
@@ -461,7 +461,7 @@ async function boot() {
 /* =====================================================================
    TẠO / SỬA NHÂN VẬT (12 NHÂN VẬT 3D NARUTO × ONE PIECE)
    ===================================================================== */
-const setup = { step: 2, mode: 'new', ap: { hero: 'luffy_g5', gender: 'nam', hair: 'ngan', skin: '#f5cba7' }, robe: 'ao_lam', sect: 'tinhdo', temple: null };
+const setup = { step: 2, mode: 'new', ap: { hero: 'luffy_g5', outfit: 'sansa_sage', gender: 'nam', hair: 'ngan', skin: '#f5cba7' }, robe: 'ao_lam', sect: 'tinhdo', temple: null };
 let preview;
 
 // Tọa độ cắt ảnh tham khảo 4 cột x 3 hàng (characters-naruto-online.jpg)
@@ -487,7 +487,7 @@ function renderHeroGrid(container, currentHero, onSelect) {
       <span class="hc-thumb" style="background-position:${HERO_SPRITE_POS[h.id] || '0% 0%'}"></span>
       <span class="hc-meta">
         <b>${esc(h.name)}</b>
-        <small>${esc(h.series)} · ${esc(h.title)}</small>
+        <small>${esc(h.title)}</small>
       </span>
     </button>
   `).join('');
@@ -496,6 +496,27 @@ function renderHeroGrid(container, currentHero, onSelect) {
       const h = HERO_MAP[btn.dataset.hero] || HERO_LIST[0];
       $$('.hero-card', container).forEach((x) => x.classList.toggle('on', x === btn));
       onSelect(h);
+    };
+  });
+}
+
+function renderOutfitGrid(container, currentOutfit, onSelect) {
+  if (!container) return;
+  const cur = currentOutfit || 'default';
+  container.innerHTML = OUTFIT_LIST.map((o) => `
+    <button type="button" class="outfit-card ${o.id === cur ? 'on' : ''}" data-outfit="${o.id}" title="${esc(o.desc)}">
+      <span class="oc-swatch" style="background:${o.swatch}">${o.icon}</span>
+      <span class="oc-meta">
+        <b>${esc(o.name)}</b>
+        <small>${esc(o.badge)} · ${esc(o.desc)}</small>
+      </span>
+    </button>
+  `).join('');
+  $$('.outfit-card', container).forEach((btn) => {
+    btn.onclick = () => {
+      const o = OUTFIT_MAP[btn.dataset.outfit] || OUTFIT_LIST[0];
+      $$('.outfit-card', container).forEach((x) => x.classList.toggle('on', x === btn));
+      onSelect(o);
     };
   });
 }
@@ -545,14 +566,19 @@ function rebuildPreview(playAction = false) {
   const robe = S.items[setup.robe]?.data;
   const beads = S.items[S.profile?.user?.equipped?.beads || 'chuoi_go']?.data;
   const heroId = setup.ap.hero || 'luffy_g5';
+  const outfitId = setup.ap.outfit || 'default';
   const heroDef = HERO_MAP[heroId] || HERO_LIST[0];
-  preview.av = makeAvatar({ hero: heroId, appearance: setup.ap, robe: robe && { color: robe.color, sash: robe.sash }, beads });
+  const outfitDef = OUTFIT_MAP[outfitId] || OUTFIT_LIST[0];
+  preview.av = makeAvatar({ hero: heroId, outfit: outfitId, appearance: setup.ap, robe: robe && { color: robe.color, sash: robe.sash }, beads });
   setSeated(preview.av, false);
   preview.av.meditating = false;
+  if (outfitDef.wideSleeves || outfitDef.djGear) {
+    setDancing(preview.av, true);
+  }
   if (playAction) triggerUltimate(preview.av);
   preview.scene.add(preview.av.root);
   const badge = $('previewHeroBadge');
-  if (badge) badge.innerHTML = `🦸 Nhân vật 3D: <b>${esc(heroDef.name)}</b> (${esc(heroDef.title)}) · Kéo để xoay 360°`;
+  if (badge) badge.innerHTML = `🦸 <b>${esc(heroDef.name)}</b> · 👘 <b>${esc(outfitDef.name)}</b> · Kéo để xoay 360°`;
 }
 
 function chipGroup(id, value, onPick) {
@@ -684,6 +710,11 @@ function openSetup(mode) {
   renderHeroGrid($('fHeroGrid'), setup.ap.hero, (h) => {
     setup.ap.hero = h.id;
     setup.ap.skin = h.skin;
+    Sound.chime?.();
+    rebuildPreview(true);
+  });
+  renderOutfitGrid($('fOutfitGrid'), setup.ap.outfit || 'default', (o) => {
+    setup.ap.outfit = o.id;
     Sound.chime?.();
     rebuildPreview(true);
   });
@@ -3819,18 +3850,18 @@ $$('#customBar [data-zone]').forEach((btn) => {
       if (Sound.djTrack === 'zen') cycleDjTrack('vinahouse');
       $('btnDjDance')?.classList.add('on');
       if ($('djDanceLabel')) $('djDanceLabel').textContent = 'Đang Quẩy';
-      updateStressUi(-10, '🎧 Lên Sàn DJ Xõa Stress! -10% Áp lực');
-      toast('🎧 Đã đến <b>Sàn DJ Ánh Trăng</b>! Chạm để đổi bài Chú Đại Bi Remix / Tâm Kinh Lo-Fi.');
+      updateStressUi(-10, '🎧 Lên Sàn DJ Ngoài Sân Chùa! -10% Áp lực');
+      toast('🎧 Đã ra <b>Sàn DJ Ánh Trăng ngoài sân chùa</b>! Chạm để đổi bài Chú Đại Bi Remix / Tâm Kinh Lo-Fi.');
     } else if (z === 'boxing') {
       $('btnDjDance')?.classList.remove('on');
       if ($('djDanceLabel')) $('djDanceLabel').textContent = 'Quẩy DJ';
       S.world.punchStressBag(0);
-      toast('🥊 Đã lên <b>Võ Đài Đấm Bốc Xả Nghiệp</b>! Chạm trực tiếp vào 5 Bao Cát hoặc bấm nút Đấm Xả Giận!');
+      toast('🥊 Đã ra <b>Võ Đài Đấm Bốc ngoài sân chùa</b>! Chạm trực tiếp vào 5 Bao Cát hoặc bấm nút Đấm Xả Giận!');
     } else if (z === 'muyu') {
       $('btnDjDance')?.classList.remove('on');
       if ($('djDanceLabel')) $('djDanceLabel').textContent = 'Quẩy DJ';
       S.world.hitHyperMuyu();
-      toast('🥁 Đã tới <b>Đại Mõ Neon Phản Lực</b>! Bấm liên tục để tích Combo xả stress!');
+      toast('🥁 Đã ra <b>Đại Mõ Phản Lực ngoài sân chùa</b>! Bấm liên tục để tích Combo xả stress!');
     } else {
       Sound.setDjTrack('zen');
       const lbl = $('djTrackLabel');
@@ -3839,7 +3870,7 @@ $$('#customBar [data-zone]').forEach((btn) => {
       $('btnDjDance')?.classList.remove('on');
       if ($('djDanceLabel')) $('djDanceLabel').textContent = 'Quẩy DJ';
       Sound.chime?.();
-      toast('🏯 Đã về giữa <b>Chánh Điện Thanh Tịnh</b>.');
+      toast('🏯 Đã vào <b>Chánh Điện Thanh Tịnh</b>.');
     }
   };
 });
@@ -3885,15 +3916,19 @@ if ($('btnHyperMuyu')) {
   };
 }
 
-// Đổi nhanh giữa 12 Nhân Vật 3D Naruto & One Piece ngay trong chùa
+// Đổi nhanh giữa 12 Nhân Vật 3D & 8 Bộ Trang Phục Sansa Hàn Quốc (?room=maru) ngay trong chùa
 function openHeroSwitcherModal() {
   const curHero = S.profile?.user?.appearance?.hero || 'luffy_g5';
+  const curOutfit = S.profile?.user?.appearance?.outfit || 'default';
   modal(`
     <div class="hero-modal">
-      <h3>🦸 Chọn Hoá Thân 3D (Naruto × One Piece)</h3>
-      <p class="muted">Toàn bộ 12 nhân vật được dựng mô hình 3D Chibi trực tiếp kèm vũ khí, hào quang &amp; tuyệt chiêu riêng.</p>
+      <h3>👘 Tướng 3D &amp; Trang Phục Sansa Hàn Quốc</h3>
+      <p class="muted">Kết hợp tự do 12 Nhân Vật 3D với Pháp Phục Sansa Hàn Quốc (tay áo rộng dance-sleeves), Cà Sa, Hanbok, Võ Phục Đấm Bốc &amp; Đồ Rave DJ.</p>
+      <div class="field" style="margin-top:8px"><b>1. Chọn Nhân Vật 3D (12 Tướng)</b></div>
       <div class="hero-grid modal-hero-grid" id="mHeroGrid"></div>
-      <div class="row" style="margin-top:12px">
+      <div class="field" style="margin-top:12px"><b>2. Chọn Đồ Trang Phục 3D (Sansa Maru &amp; Lễ Hội)</b></div>
+      <div class="outfit-grid" id="mOutfitGrid"></div>
+      <div class="row" style="margin-top:14px">
         <button class="btn ghost" id="mHeroEdit">Đổi tên / Chi tiết</button>
         <button class="btn gold" id="mHeroClose">Hoàn tất</button>
       </div>
@@ -3911,9 +3946,24 @@ function openHeroSwitcherModal() {
         toast(err.message);
       }
     });
+    renderOutfitGrid(el.querySelector('#mOutfitGrid'), curOutfit, async (o) => {
+      try {
+        const newAp = { ...(S.profile?.user?.appearance || {}), outfit: o.id };
+        const res = await api('/me', { method: 'PUT', body: { appearance: newAp } });
+        setProfile(res);
+        if (S.world?.player) {
+          if (o.wideSleeves || o.djGear) S.world.toggleDjDance(true);
+          else triggerUltimate(S.world.player);
+        }
+        Sound.success?.();
+        toast(`👘 Đã khoác bộ trang phục <b>${esc(o.name)}</b> (${esc(o.badge)})!`);
+      } catch (err) {
+        toast(err.message);
+      }
+    });
     el.querySelector('#mHeroClose').onclick = closeModal;
     el.querySelector('#mHeroEdit').onclick = () => { closeModal(); openSetup('edit'); };
-  });
+  }, { replace: true });
 }
 
 if ($('btnHeroSwitch')) {

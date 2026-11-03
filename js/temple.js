@@ -503,10 +503,12 @@ export function buildTemple(scene, theme, quality = 'high') {
   drawMerit();
 
   /* ============================================================================
-     3 KHU VỰC XÕA STRESS 3D NGAY TRONG CHÁNH ĐIỆN (SANSA TEMPLE × ANIME EDITION)
-     1. 🎧 Sàn DJ Ánh Trăng (Cyber-Lotus DJ Booth + Disco Ball + Lasers + LED Floor)
-     2. 🥊 Võ Đài Đấm Bốc Xả Nghiệp (Boxing Ring + 5 Bao Cát Vật Lý Lắc Lư)
-     3. 🥁 Đại Mõ Neon Phản Lực (Giant Combo Wooden Fish)
+     3 KHU VỰC XÕA STRESS 3D NGOÀI SÂN CHÙA (GIỐNG SANSA TEMPLE HÀN QUỐC)
+     Chánh điện bên trong giữ nguyên sự thanh tịnh, trang nghiêm để lễ Phật & tụng kinh.
+     Bước ra sân chùa ngoài trời là Quảng Trường Xõa Stress:
+     1. 🎧 Sàn DJ Ánh Trăng Ngoài Sân (Cyber-Lotus DJ Booth + Cổng Truss + Disco Ball + Lasers + LED Floor)
+     2. 🥊 Võ Đài Đấm Bốc Xả Nghiệp Ngoài Sân (Boxing Ring + 5 Bao Cát Vật Lý Lắc Lư)
+     3. 🥁 Đại Mõ Neon Phản Lực Ngoài Sân (Giant Combo Wooden Fish)
      ============================================================================ */
   function makeSignSprite(title, sub, borderCol = '#ffd36b', glowCol = 'rgba(255,211,107,0.25)') {
     const tex = canvasTex(512, 160, (ctx, w, h) => {
@@ -529,30 +531,45 @@ export function buildTemple(scene, theme, quality = 'high') {
     return sp;
   }
 
-  // ---------- 1. 🎧 SÀN DJ ÁNH TRĂNG (Bên trái chánh điện) ----------
-  const djX = -Math.max(4.6, hw - 3.3);
-  const djZ = Math.min(hd - 4.2, Math.max(0.8, (c.z0 ?? 0) + 1.8));
+  // Toạ độ Quảng Trường Sân Chùa Ngoài Trời (phía trước cửa chính chánh điện)
+  const isPond = theme.view === 'pond';
+  const outY = isCave ? 0 : (isPond ? (sur.groundY ?? -2.4) + 0.14 : (sur.groundY ?? 0));
+  const outZ = isCave ? Math.min(hd - 3.2, (c.z0 ?? 0) + 2.2) : (isPond ? Math.max(hw, hd) + 18.2 : hd + 11.2);
+  const hostGroup = (!isCave && sur?.group) ? sur.group : g;
+
+  // Nền Đá Quảng Trường Sân Chùa (đảm bảo nhân vật đi bộ mượt mà quanh Sàn DJ & Võ Đài ở mọi ngôi chùa)
+  if (!isCave && sur?.group) {
+    const terraceMat = new THREE.MeshStandardMaterial({ color: '#3b3530', roughness: 0.88 });
+    const terraceBorderMat = new THREE.MeshStandardMaterial({ color: '#c89b4b', roughness: 0.45, metalness: 0.5 });
+    const terraceMesh = mk(new THREE.BoxGeometry(22.5, 0.28, 10.5), terraceMat, 0, outY - 0.14, outZ, { cast: false, receive: true });
+    sur.group.add(terraceMesh);
+    sur.group.add(mk(new THREE.BoxGeometry(22.8, 0.06, 10.8), terraceBorderMat, 0, outY - 0.01, outZ, { cast: false, receive: false }));
+  }
+
+  // ---------- 1. 🎧 SÀN DJ ÁNH TRĂNG (Ngoài sân chùa bên trái) ----------
+  const djX = isCave ? -Math.max(4.6, hw - 3.3) : -6.2;
+  const djZ = outZ;
   const djGroup = new THREE.Group();
-  djGroup.position.set(djX, 0, djZ);
-  djGroup.rotation.y = Math.PI / 2; // hướng vào trung tâm chánh điện
-  g.add(djGroup);
+  djGroup.position.set(djX, outY, djZ);
+  djGroup.rotation.y = 0; // hướng về phía sân trước, lấy mái Chánh Điện cổ kính làm phông nền phía sau
+  hostGroup.add(djGroup);
 
   const stageBaseMat = new THREE.MeshStandardMaterial({ color: '#1b1429', roughness: 0.35, metalness: 0.6 });
   const neonPinkMat = new THREE.MeshBasicMaterial({ color: '#ff2a85' });
   const neonCyanMat = new THREE.MeshBasicMaterial({ color: '#00f0ff' });
   const neonGoldMat = new THREE.MeshBasicMaterial({ color: '#ffd36b' });
 
-  const djStageMesh = mk(new THREE.CylinderGeometry(2.35, 2.55, 0.18, 32), stageBaseMat, 0, 0.09, 0);
+  const djStageMesh = mk(new THREE.CylinderGeometry(2.55, 2.75, 0.18, 32), stageBaseMat, 0, 0.09, 0);
   djGroup.add(djStageMesh);
-  djGroup.add(mk(new THREE.TorusGeometry(2.45, 0.05, 10, 48), neonCyanMat, 0, 0.18, 0, { rot: [Math.PI / 2, 0, 0], cast: false }));
-  djGroup.add(mk(new THREE.TorusGeometry(1.95, 0.04, 10, 48), neonPinkMat, 0, 0.19, 0, { rot: [Math.PI / 2, 0, 0], cast: false }));
+  djGroup.add(mk(new THREE.TorusGeometry(2.65, 0.05, 10, 48), neonCyanMat, 0, 0.18, 0, { rot: [Math.PI / 2, 0, 0], cast: false }));
+  djGroup.add(mk(new THREE.TorusGeometry(2.1, 0.04, 10, 48), neonPinkMat, 0, 0.19, 0, { rot: [Math.PI / 2, 0, 0], cast: false }));
 
-  // Sàn LED 4x4 nhấp nháy theo nhịp nhạc
+  // Sàn LED 4x4 nhấp nháy theo nhịp nhạc ngoài trời
   const ledTiles = [];
   const ledColors = [0xff2a85, 0x00f0ff, 0xffd36b, 0x9d4edd, 0x00f5d4, 0xff6b00];
   for (let gx = -1.5; gx <= 1.5; gx += 1) {
-    for (let gz = -0.4; gz <= 1.6; gz += 0.68) {
-      const tm = new THREE.MeshBasicMaterial({ color: ledColors[(Math.abs(Math.round(gx * 2 + gz * 3))) % ledColors.length], transparent: true, opacity: 0.55 });
+    for (let gz = -0.35; gz <= 1.65; gz += 0.66) {
+      const tm = new THREE.MeshBasicMaterial({ color: ledColors[(Math.abs(Math.round(gx * 2 + gz * 3))) % ledColors.length], transparent: true, opacity: 0.6 });
       const tile = mk(new THREE.BoxGeometry(0.82, 0.03, 0.56), tm, gx * 0.9, 0.19, gz, { cast: false });
       djGroup.add(tile);
       ledTiles.push(tile);
@@ -578,8 +595,15 @@ export function buildTemple(scene, theme, quality = 'high') {
     platters.push(plGroup);
   }
 
-  // 2 Cột Loa Thùng Khổng Lồ (Subwoofer Stacks)
+  // 2 Cột Loa Thùng Khổng Lồ (Subwoofer Stacks) + Khung Giàn Truss Lễ Hội Ngoài Trời
   const speakerCones = [];
+  const trussMat = new THREE.MeshStandardMaterial({ color: '#1e293b', metalness: 0.85, roughness: 0.25 });
+  djGroup.add(
+    mk(new THREE.CylinderGeometry(0.08, 0.09, 4.6, 12), trussMat, -2.15, 2.3, -1.15),
+    mk(new THREE.CylinderGeometry(0.08, 0.09, 4.6, 12), trussMat, 2.15, 2.3, -1.15),
+    mk(new THREE.CylinderGeometry(0.08, 0.08, 4.5, 12), trussMat, 0, 4.55, -1.15, { rot: [0, 0, Math.PI / 2] }),
+    mk(new THREE.BoxGeometry(4.4, 0.06, 0.06), neonCyanMat, 0, 4.62, -1.15, { cast: false })
+  );
   for (const s of [-1.45, 1.45]) {
     djGroup.add(mk(new THREE.BoxGeometry(0.76, 2.1, 0.72), boothMat, s, 1.22, -1.1));
     djGroup.add(mk(new THREE.BoxGeometry(0.8, 0.06, 0.76), neonPinkMat, s, 2.28, -1.1, { cast: false }));
@@ -591,16 +615,16 @@ export function buildTemple(scene, theme, quality = 'high') {
     }
   }
 
-  // Quả cầu gương Hoa Sen (Disco Ball) + 4 Tia Laser quét trần chùa
+  // Quả cầu gương Hoa Sen (Disco Ball) treo trên giàn Truss ngoài trời + 4 Tia Laser quét sân chùa
   const discoGroup = new THREE.Group();
-  discoGroup.position.set(0, Math.min(H - 1.4, 5.4), 0);
-  const discoBall = mk(new THREE.IcosahedronGeometry(0.45, 2), new THREE.MeshStandardMaterial({ color: '#ffffff', emissive: '#ffd36b', emissiveIntensity: 0.4, metalness: 0.95, roughness: 0.08 }), 0, 0, 0, { cast: false });
+  discoGroup.position.set(0, 4.2, -0.4);
+  const discoBall = mk(new THREE.IcosahedronGeometry(0.42, 2), new THREE.MeshStandardMaterial({ color: '#ffffff', emissive: '#ffd36b', emissiveIntensity: 0.45, metalness: 0.95, roughness: 0.08 }), 0, 0, 0, { cast: false });
   discoGroup.add(discoBall);
   const lasers = [];
   const laserCols = ['#00f0ff', '#ff2a85', '#ffd36b', '#a855f7'];
   for (let i = 0; i < 4; i++) {
-    const lMat = new THREE.MeshBasicMaterial({ color: laserCols[i], transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
-    const beam = mk(new THREE.ConeGeometry(1.4, 5.6, 12, 1, true), lMat, 0, -2.6, 0, { cast: false });
+    const lMat = new THREE.MeshBasicMaterial({ color: laserCols[i], transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
+    const beam = mk(new THREE.ConeGeometry(1.4, 4.4, 12, 1, true), lMat, 0, -2.1, 0, { cast: false });
     const pivot = new THREE.Group();
     pivot.rotation.y = (i * Math.PI) / 2;
     pivot.rotation.z = 0.42;
@@ -610,19 +634,19 @@ export function buildTemple(scene, theme, quality = 'high') {
   }
   djGroup.add(discoGroup);
 
-  const djSign = makeSignSprite('🎧 SÀN DJ XÕA STRESS', 'Chạm để Quẩy Chú Đại Bi Remix', '#00f0ff', 'rgba(0,240,255,0.18)');
-  djSign.position.set(0, 3.35, -0.6);
+  const djSign = makeSignSprite('🎧 SÀN DJ NGOÀI SÂN', 'Chạm để Quẩy Chú Đại Bi Remix', '#00f0ff', 'rgba(0,240,255,0.18)');
+  djSign.position.set(0, 3.35, -1.1);
   djGroup.add(djSign);
 
   let djPartyActive = false;
 
-  // ---------- 2. 🥊 VÕ ĐÀI ĐẤM BỐC XẢ NGHIỆP (Bên phải chánh điện) ----------
-  const boxX = Math.max(4.6, hw - 3.3);
-  const boxZ = djZ;
+  // ---------- 2. 🥊 VÕ ĐÀI ĐẤM BỐC XẢ NGHIỆP (Ngoài sân chùa bên phải) ----------
+  const boxX = isCave ? Math.max(4.6, hw - 3.3) : 6.2;
+  const boxZ = outZ;
   const boxGroup = new THREE.Group();
-  boxGroup.position.set(boxX, 0, boxZ);
-  boxGroup.rotation.y = -Math.PI / 2; // hướng vào trung tâm chánh điện
-  g.add(boxGroup);
+  boxGroup.position.set(boxX, outY, boxZ);
+  boxGroup.rotation.y = 0; // hướng về phía người chơi ngoài sân chùa
+  hostGroup.add(boxGroup);
 
   const ringMat = new THREE.MeshStandardMaterial({ color: '#2b1216', roughness: 0.65 });
   const ringBorderMat = new THREE.MeshStandardMaterial({ color: '#d9a443', metalness: 0.75, roughness: 0.3 });
@@ -704,7 +728,7 @@ export function buildTemple(scene, theme, quality = 'high') {
       emissiveIntensity: 0,
     });
     const body = mk(new THREE.CylinderGeometry(0.31, 0.33, 1.38, 22), bagMat, 0, -1.5, 0);
-    body.rotation.y = Math.PI; // hướng chữ ra phía người chơi
+    body.rotation.y = Math.PI; // hướng chữ ra phía người chơi (+z)
     body.userData.bagIdx = idx;
     const capTop = mk(new THREE.SphereGeometry(0.31, 16, 10), ringBorderMat, 0, -0.82, 0, { scale: [1, 0.35, 1], cast: false });
     const capBot = mk(new THREE.SphereGeometry(0.33, 16, 10), ringBorderMat, 0, -2.18, 0, { scale: [1, 0.35, 1], cast: false });
@@ -714,15 +738,15 @@ export function buildTemple(scene, theme, quality = 'high') {
     bags.push({ idx, def, pivot, body, mat: bagMat, rx: 0, rz: 0, vx: 0, vz: 0, flash: 0 });
   });
 
-  const boxSign = makeSignSprite('🥊 ĐẤM BỐC XẢ NGHIỆP', 'Chạm vào Bao Cát để tung Tuyệt Chiêu!', '#ff6b4a', 'rgba(255,107,74,0.2)');
+  const boxSign = makeSignSprite('🥊 VÕ ĐÀI NGOÀI SÂN', 'Chạm vào Bao Cát để tung Tuyệt Chiêu!', '#ff6b4a', 'rgba(255,107,74,0.2)');
   boxSign.position.set(0, 4.25, -0.2);
   boxGroup.add(boxSign);
 
-  // ---------- 3. 🥁 ĐẠI MÕ NEON PHẢN LỰC (Cạnh bàn lễ giữa chánh điện) ----------
-  const muyuPos = new THREE.Vector3(2.35, 0, tz + 0.9);
+  // ---------- 3. 🥁 ĐẠI MÕ NEON PHẢN LỰC (Giữa Quảng Trường Sân Chùa) ----------
+  const muyuPos = new THREE.Vector3(0, outY, outZ - 1.2);
   const muyuGroup = new THREE.Group();
   muyuGroup.position.copy(muyuPos);
-  g.add(muyuGroup);
+  hostGroup.add(muyuGroup);
 
   const pedMat = new THREE.MeshStandardMaterial({ color: '#4e140d', roughness: 0.4 });
   muyuGroup.add(mk(new THREE.CylinderGeometry(0.68, 0.82, 0.72, 24), pedMat, 0, 0.36, 0));
@@ -742,7 +766,7 @@ export function buildTemple(scene, theme, quality = 'high') {
   );
   muyuGroup.add(giantMalletPivot);
 
-  const muyuSign = makeSignSprite('🥁 ĐẠI MÕ PHẢN LỰC', 'Gõ Liên Thanh Xả Stress Cực Đã', '#ffd36b', 'rgba(255,211,107,0.2)');
+  const muyuSign = makeSignSprite('🥁 ĐẠI MÕ SÂN CHÙA', 'Gõ Liên Thanh Xả Stress Cực Đã', '#ffd36b', 'rgba(255,211,107,0.2)');
   muyuSign.position.set(0, 2.38, 0);
   muyuSign.scale.set(2.3, 0.72, 1);
   muyuGroup.add(muyuSign);
@@ -756,7 +780,7 @@ export function buildTemple(scene, theme, quality = 'high') {
     );
     ring.position.copy(worldPos);
     ring.rotation.x = -Math.PI / 2;
-    g.add(ring);
+    hostGroup.add(ring);
     shockwaves.push({ mesh: ring, t: 0 });
   }
 
@@ -808,7 +832,7 @@ export function buildTemple(scene, theme, quality = 'high') {
       const sw = shockwaves[i];
       sw.t += dt * 2.4;
       if (sw.t >= 1) {
-        g.remove(sw.mesh);
+        hostGroup.remove(sw.mesh);
         sw.mesh.geometry.dispose();
         sw.mesh.material.dispose();
         shockwaves.splice(i, 1);
@@ -820,10 +844,10 @@ export function buildTemple(scene, theme, quality = 'high') {
   });
 
   const stressZones = {
-    hall: { pos: new THREE.Vector3(0, 0, Math.min(hd - 3.5, (c.z0 ?? 0) + 2.5)), yaw: 0, label: 'Chánh Điện Thanh Tịnh' },
-    dj: { pos: new THREE.Vector3(djX + 1.4, 0, djZ + 0.3), yaw: Math.PI / 2, label: '🎧 Sàn DJ Ánh Trăng' },
-    boxing: { pos: new THREE.Vector3(boxX - 1.5, 0, boxZ + 0.2), yaw: -Math.PI / 2, label: '🥊 Võ Đài Đấm Bốc Xả Nghiệp' },
-    muyu: { pos: new THREE.Vector3(muyuPos.x - 1.15, 0, muyuPos.z + 1.1), yaw: -0.35, label: '🥁 Đại Mõ Neon Phản Lực' },
+    hall: { pos: new THREE.Vector3(0, 0, Math.min(hd - 3.5, (c.z0 ?? 0) + 2.5)), yaw: 0, label: '🏯 Trong Chánh Điện Thanh Tịnh' },
+    dj: { pos: new THREE.Vector3(djX, outY + 0.18, djZ + 0.65), yaw: 0, label: '🎧 Sàn DJ Ánh Trăng (Ngoài Sân)' },
+    boxing: { pos: new THREE.Vector3(boxX, outY + 0.16, boxZ + 1.05), yaw: 0, label: '🥊 Võ Đài Đấm Bốc (Ngoài Sân)' },
+    muyu: { pos: new THREE.Vector3(muyuPos.x, outY, muyuPos.z + 1.55), yaw: 0, label: '🥁 Đại Mõ Phản Lực (Ngoài Sân)' },
   };
 
   const bounds = { minX: -hw + 1, maxX: hw - 1, minZ: tz + 1.2, maxZ: hd - 1 };
@@ -842,25 +866,35 @@ export function buildTemple(scene, theme, quality = 'high') {
     hitBag(idx = 2, power = 1) {
       const b = bags[idx] || bags[2];
       if (!b) return null;
-      b.vz = -6.5 * power + rand(-1.5, 1.5);
-      b.vx = rand(-2.8, 2.8) * power;
+      b.vx = -6.8 * power + rand(-1.5, 1.5);
+      b.vz = rand(-2.6, 2.6) * power;
       b.flash = 1;
       const wp = new THREE.Vector3();
       b.body.getWorldPosition(wp);
-      wp.y = 0.15;
+      wp.y = outY + 0.22;
       spawnShockwave(wp, 0xff5a1a);
       return b.def;
     },
     hitGiantMuyu() {
       giantMuyuAnim = 0;
-      spawnShockwave(new THREE.Vector3(muyuPos.x, 0.15, muyuPos.z), 0xffd36b);
+      spawnShockwave(new THREE.Vector3(muyuPos.x, outY + 0.2, muyuPos.z), 0xffd36b);
     },
     setStele: drawStele,
     steleFace: face,
     setMerit: drawMerit,
     meritStele: merit,
-    // dữ liệu để đi ra ngoài: cảnh quan, cửa chính, nền đất
-    outdoor: !isCave ? { group: sur.group, groundY: sur.groundY ?? 0, doorW: Math.min(6, W * 0.3), hw, hd, W, D, H, cable: sur.cable || null, walkR: sur.walkR || 0, blocks: sur.blocks, noGarden: sur.noGarden, forest: sur.forest } : null,
+    // dữ liệu để đi ra ngoài: cảnh quan, cửa chính, nền đất (chừa khoảng sân lễ hội DJ & Đấm bốc không mọc cây)
+    outdoor: !isCave ? {
+      group: sur.group,
+      groundY: sur.groundY ?? 0,
+      doorW: Math.min(6, W * 0.3),
+      hw, hd, W, D, H,
+      cable: sur.cable || null,
+      walkR: sur.walkR || 0,
+      blocks: sur.blocks,
+      noGarden: (x, z) => (Math.abs(x) < 14 && Math.abs(z - outZ) < 8) || (sur.noGarden ? sur.noGarden(x, z) : false),
+      forest: sur.forest,
+    } : null,
     setCushionLook(cu, look) {
       const lotus = !!look?.lotus;
       cu.mesh.geometry = lotus ? lotusPad() : cuGeo;

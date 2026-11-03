@@ -164,6 +164,115 @@ export const HERO_LIST = [
 
 export const HERO_MAP = Object.fromEntries(HERO_LIST.map((h) => [h.id, h]));
 
+// Bộ Sưu Tập Đồ Trang Phục 3D (Tham khảo Pháp Phục Sansa Temple Hàn Quốc ?room=maru & Đồ Lễ Hội Sân Chùa)
+export const OUTFIT_LIST = [
+  {
+    id: 'default',
+    name: 'Nguyên Bản Anime',
+    badge: 'Mặc định',
+    desc: 'Trang phục chiến đấu đặc trưng của từng nhân vật 3D.',
+    icon: '⚡',
+    swatch: '#f59e0b',
+  },
+  {
+    id: 'sansa_sage',
+    name: 'Pháp Phục Sansa (Lá Thông)',
+    badge: 'Sansa Maru',
+    desc: 'Áo tràng Hàn Quốc nguyên khối (#bdc5ad) kèm tay áo rộng dance-sleeves & tràng hạt.',
+    icon: '🍃',
+    swatch: '#bdc5ad',
+    robeColor: '#bdc5ad',
+    pantsColor: '#8f9b8c',
+    sashColor: '#e8dfcc',
+    sansaRobe: true,
+    wideSleeves: true,
+    malaColor: '#78350f',
+  },
+  {
+    id: 'sansa_lotus',
+    name: 'Pháp Phục Sansa (Hồng Sen)',
+    badge: 'Sansa Maru',
+    desc: 'Pháp phục lụa mềm Hàn Quốc tông Hồng Sen Phấn (#e5b0aa) thanh lịch, tay áo rộng bay bổng.',
+    icon: '🌸',
+    swatch: '#e5b0aa',
+    robeColor: '#e5b0aa',
+    pantsColor: '#cbbdab',
+    sashColor: '#fff1e6',
+    sansaRobe: true,
+    wideSleeves: true,
+    malaColor: '#9d3e37',
+  },
+  {
+    id: 'sansa_celadon',
+    name: 'Pháp Phục Sansa (Bạch Ngọc)',
+    badge: 'Sansa Maru',
+    desc: 'Áo tràng thiền viện núi cao Hàn Quốc tông Lam Bạch Ngọc (#b9c8c2) dịu mắt.',
+    icon: '🏔️',
+    swatch: '#b9c8c2',
+    robeColor: '#b9c8c2',
+    pantsColor: '#7c8179',
+    sashColor: '#e8f3f0',
+    sansaRobe: true,
+    wideSleeves: true,
+    malaColor: '#3e5449',
+  },
+  {
+    id: 'sansa_kasa',
+    name: 'Đại Y Thiền Sư (Cà Sa Đỏ Vàng)',
+    badge: 'Chánh Điện',
+    desc: 'Pháp phục Jangsam vàng lúa mạch (#dfc890) khoác Y Hậu Kasa đỏ son (#b94048) trang nghiêm.',
+    icon: '袈',
+    swatch: '#b94048',
+    robeColor: '#dfc890',
+    pantsColor: '#a69b84',
+    sashColor: '#b94048',
+    sansaRobe: true,
+    wideSleeves: true,
+    kasaColor: '#b94048',
+    malaColor: '#b45309',
+  },
+  {
+    id: 'hanbok_maru',
+    name: 'Lễ Phục Hanbok Chùa Cổ',
+    badge: 'Hàn Quốc',
+    desc: 'Áo Durumagi Hanbok 2 tầng lụa Lam Khói Chiều (#adbcdb) & nơ Goreum truyền thống.',
+    icon: '🎐',
+    swatch: '#adbcdb',
+    robeColor: '#adbcdb',
+    pantsColor: '#343a50',
+    sashColor: '#9d3e37',
+    sansaRobe: true,
+    wideSleeves: true,
+    hanbokRibbon: '#9d3e37',
+  },
+  {
+    id: 'boxing_champ',
+    name: 'Võ Phục Đấm Bốc Hoàng Kim',
+    badge: 'Võ Đài',
+    desc: 'Đai vô địch mạ vàng, băng trán chiến binh & đôi Găng Tay Đấm Bốc 3D đỏ rực luôn bật sẵn!',
+    icon: '🥊',
+    swatch: '#ef4444',
+    robeColor: '#18181b',
+    pantsColor: '#b91c1c',
+    sashColor: '#facc15',
+    boxingGear: true,
+  },
+  {
+    id: 'dj_rave',
+    name: 'Đồ Lễ Hội Neon Cyber-Lotus',
+    badge: 'Sàn DJ',
+    desc: 'Áo khoác Rave phát sáng LED Neon, kính Cyber Visor & tai nghe DJ 3D quẩy banh sân chùa!',
+    icon: '🎧',
+    swatch: '#38bdf8',
+    robeColor: '#0f172a',
+    pantsColor: '#1e1b4b',
+    sashColor: '#38bdf8',
+    djGear: true,
+  },
+];
+
+export const OUTFIT_MAP = Object.fromEntries(OUTFIT_LIST.map((o) => [o.id, o]));
+
 const ROBE_PROFILE = [[0, 0], [0.36, 0], [0.42, 0.08], [0.40, 0.25], [0.35, 0.45], [0.26, 0.62], [0.14, 0.72], [0, 0.74]].map(([x, y]) => new THREE.Vector2(x, y));
 const SKIRT_PROFILE = [[0.41, 0.05], [0.39, 0.16], [0.37, 0.3], [0.35, 0.42], [0.34, 0.5]].map(([x, y]) => new THREE.Vector2(x, y));
 
@@ -770,37 +879,108 @@ function resolveHero(opts = {}) {
   return HERO_LIST[(autoHeroIdx++) % HERO_LIST.length];
 }
 
+let autoOutfitIdx = 0;
+function resolveOutfit(opts = {}) {
+  const ap = opts.appearance || {};
+  if (ap.outfit && OUTFIT_MAP[ap.outfit]) return OUTFIT_MAP[ap.outfit];
+  if (opts.outfit && OUTFIT_MAP[opts.outfit]) return OUTFIT_MAP[opts.outfit];
+  if (opts.autoSansaOutfit) {
+    const sansaIds = ['sansa_sage', 'sansa_lotus', 'sansa_celadon', 'sansa_kasa', 'hanbok_maru', 'default'];
+    return OUTFIT_MAP[sansaIds[(autoOutfitIdx++) % sansaIds.length]] || OUTFIT_LIST[0];
+  }
+  return OUTFIT_LIST[0];
+}
+
 export function makeAvatar(opts = {}) {
   const hero = resolveHero(opts);
+  const outfit = resolveOutfit(opts);
+  const useOutfitColors = outfit && outfit.id !== 'default';
+  const rColor = useOutfitColors && outfit.robeColor ? outfit.robeColor : hero.robeColor;
+  const pColor = useOutfitColors && outfit.pantsColor ? outfit.pantsColor : hero.pantsColor;
+  const sColor = useOutfitColors && outfit.sashColor ? outfit.sashColor : hero.sashColor;
+
   const skinM = mat(hero.skin, { roughness: 0.52 });
-  const robeM = mat(hero.robeColor, {
-    roughness: hero.id === 'naruto_sage' ? 0.3 : 0.65,
-    emissive: hero.id === 'naruto_sage' ? '#b45309' : '#000000',
-    emissiveIntensity: hero.id === 'naruto_sage' ? 0.35 : 0,
+  const robeM = mat(rColor, {
+    roughness: outfit?.sansaRobe ? 0.82 : (hero.id === 'naruto_sage' && !useOutfitColors ? 0.3 : 0.65),
+    emissive: outfit?.djGear ? '#0284c7' : (hero.id === 'naruto_sage' && !useOutfitColors ? '#b45309' : '#000000'),
+    emissiveIntensity: outfit?.djGear ? 0.32 : (hero.id === 'naruto_sage' && !useOutfitColors ? 0.35 : 0),
   });
-  const pantsM = mat(hero.pantsColor, { roughness: 0.7 });
-  const sashM = mat(hero.sashColor, { roughness: 0.5 });
+  const pantsM = mat(pColor, { roughness: outfit?.sansaRobe ? 0.82 : 0.7 });
+  const sashM = mat(sColor, { roughness: 0.5, metalness: outfit?.boxingGear ? 0.75 : 0.08 });
 
   const root = new THREE.Group();
   const upper = new THREE.Group();
   root.add(upper);
 
-  // Thân áo 3D Chibi (riêng Ace và Kaido lộ cơ ngực rám nắng khỏe khoắn)
-  const torsoMat = (hero.id === 'ace' || hero.id === 'kaido') ? skinM : robeM;
+  // Thân áo 3D Chibi (riêng Ace, Kaido hoặc bộ Võ Phục Đấm Bốc lộ cơ ngực khỏe khoắn)
+  const bareChest = !outfit?.sansaRobe && !outfit?.djGear && (outfit?.boxingGear || hero.id === 'ace' || hero.id === 'kaido');
+  const torsoMat = bareChest ? skinM : robeM;
   upper.add(m(G.torso, torsoMat, 0, -0.05, 0, { scale: [1, 1, 0.88] }));
   // Đai thắt lưng / Sash đặc trưng
   upper.add(m(new THREE.CylinderGeometry(0.39, 0.41, 0.14, 28), sashM, 0, 0.14, 0));
 
-  // Tay & Bàn tay + Găng tay đấm bốc ẩn (bật khi lên võ đài đấm bốc!)
-  const arms = [], hands = [], boxingGloves = [];
+  // Tay & Bàn tay + Tay áo rộng Hàn Quốc (dance-sleeves từ Sansa Temple ?room=maru) + Găng tay đấm bốc
+  const arms = [], hands = [], boxingGloves = [], danceSleeves = [];
+  const sleeveGeo = new THREE.ConeGeometry(0.24, 0.42, 18, 1, true);
+  const sleeveMat = mat(rColor, { roughness: 0.82, side: THREE.DoubleSide });
   for (const s of [-1, 1]) {
     const a = m(G.arm, torsoMat, s * 0.30, 0.38, -0.12, { rot: [1.0, 0, s * 0.5] });
+    if (outfit?.wideSleeves) {
+      // Tay áo trường sam Hàn Quốc (One_continuous_soft_robe / dance-sleeves) rủ mềm quanh cánh tay
+      const slv = m(sleeveGeo, sleeveMat, 0, -0.04, 0.04, { rot: [Math.PI, 0, 0], scale: [0.85, 1.0, 1.25] });
+      a.add(slv);
+      danceSleeves.push(slv);
+    }
     const h = m(G.hand, skinM, s * 0.05, 0.5, -0.36);
     const glv = m(G.glove, mat('#ef4444', { roughness: 0.3, metalness: 0.15 }), 0, 0, -0.03, { scale: [1.1, 1.0, 1.25] });
-    glv.visible = false;
+    glv.visible = !!outfit?.boxingGear;
     h.add(glv);
     arms.push(a); hands.push(h); boxingGloves.push(glv);
     upper.add(a, h);
+  }
+
+  // Chi tiết 3D đặc trưng của Bộ Sưu Tập Trang Phục Sansa Temple (?room=maru) & Lễ Hội
+  if (outfit?.sansaRobe) {
+    // Cổ áo giao lĩnh chữ V Hàn Quốc (Beopbok / 승복) & Vạt xếp nếp prayerCloth
+    const collarMat = mat('#f8fafc', { roughness: 0.75 });
+    upper.add(m(new THREE.TorusGeometry(0.21, 0.035, 10, 24), collarMat, 0, 0.62, -0.02, { rot: [Math.PI / 2 + 0.22, 0, 0] }));
+    const foldMat = mat(sColor, { roughness: 0.78 });
+    upper.add(m(new THREE.BoxGeometry(0.22, 0.46, 0.04), foldMat, 0, 0.34, -0.33, { rot: [-0.12, 0, 0.18] }));
+  }
+  if (outfit?.malaColor) {
+    // Chuỗi Tràng Hạt 108 Hạt gỗ Bồ Đề đeo cổ chuẩn Thiền viện Sansa
+    const beadMat = mat(outfit.malaColor, { roughness: 0.45 });
+    for (let b = 0; b < 16; b++) {
+      const ang = (b / 16) * Math.PI * 2;
+      upper.add(m(new THREE.SphereGeometry(0.032, 8, 8), beadMat, Math.sin(ang) * 0.25, 0.56 - Math.cos(ang) * 0.10, -0.05 - Math.cos(ang) * 0.24));
+    }
+  }
+  if (outfit?.kasaColor) {
+    // Y Hậu Cà Sa (Kasa / 가사) đỏ son viền vàng vắt chéo vai trái xuống hông phải
+    const kasaMat = mat(outfit.kasaColor, { roughness: 0.6, side: THREE.DoubleSide });
+    const kasaSash = m(new THREE.CylinderGeometry(0.37, 0.41, 0.44, 24, 1, true, -0.8, 3.6), kasaMat, 0, 0.36, 0, { rot: [0, 0, 0.34] });
+    const goldRing = m(new THREE.TorusGeometry(0.065, 0.016, 10, 20), mat('#facc15', { metalness: 0.85, roughness: 0.2 }), -0.18, 0.48, -0.31);
+    upper.add(kasaSash, goldRing);
+  }
+  if (outfit?.hanbokRibbon) {
+    // Nơ áo Hanbok Goreum truyền thống Hàn Quốc trước ngực
+    const ribMat = mat(outfit.hanbokRibbon, { roughness: 0.55 });
+    upper.add(m(new THREE.TorusGeometry(0.075, 0.022, 8, 18), ribMat, 0.08, 0.48, -0.35, { rot: [0.2, 0.3, 0.5] }));
+    upper.add(m(new THREE.BoxGeometry(0.055, 0.34, 0.02), ribMat, 0.06, 0.28, -0.37, { rot: [0, 0, -0.12] }));
+    upper.add(m(new THREE.BoxGeometry(0.055, 0.28, 0.02), ribMat, 0.13, 0.30, -0.36, { rot: [0, 0, -0.26] }));
+  }
+  if (outfit?.boxingGear) {
+    // Đai Vô Địch Đấm Bốc Hoàng Kim (Champion Belt) trước bụng
+    const beltGold = mat('#facc15', { metalness: 0.88, roughness: 0.18 });
+    upper.add(m(new THREE.CylinderGeometry(0.32, 0.32, 0.04, 20), beltGold, 0, 0.15, -0.36, { rot: [Math.PI / 2, 0, 0], scale: [1.2, 1, 0.75] }));
+    upper.add(m(new THREE.SphereGeometry(0.055, 12, 10), mat('#dc2626', { metalness: 0.5, roughness: 0.2 }), 0, 0.15, -0.39));
+  }
+  if (outfit?.djGear) {
+    // Viền cổ áo LED Neon phát sáng Cyber-Lotus
+    const neonMat = new THREE.MeshBasicMaterial({ color: '#38bdf8' });
+    const neonPink = new THREE.MeshBasicMaterial({ color: '#f43f5e' });
+    upper.add(m(new THREE.TorusGeometry(0.25, 0.026, 10, 24), neonMat, 0, 0.62, 0, { rot: [Math.PI / 2 + 0.15, 0, 0], cast: false }));
+    upper.add(m(new THREE.TorusGeometry(0.40, 0.018, 10, 28), neonPink, 0, 0.14, 0, { rot: [Math.PI / 2, 0, 0], cast: false }));
   }
 
   // Đầu Chibi lớn biểu cảm + Mặt Anime sắc nét + Tóc/Mũ/Sừng 3D
@@ -820,19 +1000,34 @@ export function makeAvatar(opts = {}) {
   eyes.forEach((e) => { e.visible = false; head.add(e); });
 
   buildHeroHead3D(head, hero);
+
+  // Phụ kiện đầu theo Bộ Trang Phục (Kính Cyber Visor & Tai nghe DJ hoặc Băng trán Võ sĩ)
+  if (outfit?.djGear) {
+    const visorMat = new THREE.MeshBasicMaterial({ color: '#38bdf8', transparent: true, opacity: 0.86 });
+    head.add(m(new THREE.CylinderGeometry(0.475, 0.475, 0.13, 24, 1, true, -Math.PI * 0.34, Math.PI * 0.68), visorMat, 0, 0.03, 0, { rot: [0, Math.PI, 0], cast: false }));
+    const hpBand = m(new THREE.TorusGeometry(0.49, 0.032, 10, 28, Math.PI), mat('#0f172a', { metalness: 0.8 }), 0, 0.04, 0);
+    head.add(hpBand);
+    for (const s of [-1, 1]) {
+      head.add(m(new THREE.CylinderGeometry(0.13, 0.13, 0.08, 16), mat('#1e293b', { metalness: 0.7 }), s * 0.48, 0.0, 0.02, { rot: [0, 0, Math.PI / 2] }));
+      head.add(m(new THREE.TorusGeometry(0.10, 0.018, 8, 18), new THREE.MeshBasicMaterial({ color: '#f43f5e' }), s * 0.52, 0.0, 0.02, { rot: [0, Math.PI / 2, 0], cast: false }));
+    }
+  } else if (outfit?.boxingGear) {
+    head.add(m(new THREE.CylinderGeometry(0.47, 0.47, 0.10, 28, 1, true), mat('#dc2626', { roughness: 0.5, side: THREE.DoubleSide }), 0, 0.18, 0));
+  }
+
   upper.add(head);
 
-  // Chân, Giày và Vạt áo
-  const lap = m(G.lap, pantsM, 0, 0.12, -0.06, { scale: [0.52, 0.17, 0.42] });
+  // Chân, Giày và Vạt áo (One_continuous_soft_robe)
+  const lap = m(G.lap, outfit?.sansaRobe ? robeM : pantsM, 0, 0.12, -0.06, { scale: [0.52, 0.17, 0.42] });
   const legs = new THREE.Group();
   const legL = m(G.leg, pantsM, -0.14, 0.2, 0), legR = m(G.leg, pantsM, 0.14, 0.2, 0);
-  const shoeM = mat('#1e1b18', { roughness: 0.65 });
+  const shoeM = mat(outfit?.sansaRobe ? '#f8fafc' : '#1e1b18', { roughness: 0.65 });
   for (const l of [legL, legR]) {
     l.add(m(G.foot, shoeM, 0, -0.19, -0.05, { scale: [0.95, 0.65, 1.4] }));
   }
   legs.add(legL, legR);
-  const skirt = m(G.skirt, robeM, 0, 0, 0, { scale: [0.95, 0.85, 0.85] });
-  skirt.visible = ['itachi', 'zoro', 'naruto_sage', 'minato'].includes(hero.id);
+  const skirt = m(G.skirt, robeM, 0, 0, 0, { scale: outfit?.sansaRobe ? [1.02, 0.96, 0.96] : [0.95, 0.85, 0.85] });
+  skirt.visible = !!outfit?.sansaRobe || ['itachi', 'zoro', 'naruto_sage', 'minato'].includes(hero.id);
   legs.add(skirt);
   root.add(lap, legs);
 
@@ -854,12 +1049,13 @@ export function makeAvatar(opts = {}) {
 
   const av = {
     root, upper, head, lap, legs, legL, legR, skirt, arms, hands, eyes,
-    boxingGloves, vfxGroup, ultSphere, hero,
+    boxingGloves, danceSleeves, vfxGroup, ultSphere, hero, outfit,
+    groundY: opts.groundY || 0,
     pose: 'sit', bowing: false, bowT: 0, walk: 0, meditate: 0,
-    dancing: false, danceStyle: 0, boxingMode: false, ultTimer: 0,
+    dancing: false, danceStyle: 0, boxingMode: !!outfit?.boxingGear, ultTimer: 0,
     onBow: null, phase: Math.random() * 10,
   };
-  av.aura = auraDisc(opts.robe?.aura || hero.aura);
+  av.aura = auraDisc(opts.robe?.aura || outfit?.swatch || hero.aura);
   root.add(av.aura);
 
   addGear(av, opts);
@@ -874,7 +1070,7 @@ export function setSeated(av, on) {
   av.lap.visible = on;
   av.legs.visible = !on;
   av.upper.position.y = on ? 0.3 : 0.4;
-  av.baseY = on ? 0.17 : 0;
+  av.baseY = (av.groundY || 0) + (on ? 0.17 : 0);
   av.root.position.y = av.baseY;
 }
 
@@ -889,8 +1085,9 @@ export function setDancing(av, on, style = 0) {
 }
 
 export function setBoxingGloves(av, on) {
-  av.boxingMode = on;
-  av.boxingGloves?.forEach((g) => (g.visible = on));
+  const show = on || !!av.outfit?.boxingGear;
+  av.boxingMode = show;
+  av.boxingGloves?.forEach((g) => (g.visible = show));
 }
 
 export function triggerUltimate(av) {
@@ -989,9 +1186,9 @@ export function animateAvatar(av, dt, time, moving = false) {
     }
   });
 
-  // Vũ điệu Xõa Stress trên Sàn DJ (tương tự #party-dance của Sansa + Vũ điệu Thần Nika)
+  // Vũ điệu Xõa Stress trên Sàn DJ (tương tự #party-dance 108 BPM của Sansa Temple + Vũ điệu Thần Nika)
   if (av.dancing && !moving && !av.seated && !av.bowing) {
-    const beat = time * 8.5 + av.phase;
+    const beat = time * 11.31 + av.phase; // 108 BPM * 2 * PI / 60 = 11.31 rad/s chuẩn Sansa Temple
     const bounce = Math.abs(Math.sin(beat));
     av.root.position.y = av.baseY + bounce * 0.22;
     av.upper.rotation.z = Math.sin(beat * 0.5) * 0.24;
@@ -1002,7 +1199,23 @@ export function animateAvatar(av, dt, time, moving = false) {
     av.legR.rotation.x = -Math.sin(beat) * 0.55;
     av.hands.forEach((h, i) => {
       const s = i ? 1 : -1;
-      h.position.set(s * (0.34 + Math.sin(beat + i) * 0.08), 0.78 + Math.sin(beat + i * 3.14) * 0.22, -0.22);
+      h.position.set(
+        s * (0.36 + Math.sin(beat * 0.5 + s * 0.7) * 0.14),
+        0.82 + Math.sin(beat + i * Math.PI) * 0.24,
+        -0.22 + Math.cos(beat * 0.5) * 0.08
+      );
+    });
+    if (av.danceSleeves?.length) {
+      av.danceSleeves.forEach((slv, i) => {
+        const s = i ? 1 : -1;
+        slv.scale.set(1.18 + Math.sin(beat + i) * 0.18, 1.15, 1.55 + Math.cos(beat * 0.5) * 0.25);
+        slv.rotation.z = s * Math.sin(beat * 0.5) * 0.32;
+      });
+    }
+  } else if (av.danceSleeves?.length) {
+    av.danceSleeves.forEach((slv) => {
+      slv.scale.set(0.85, 1.0, 1.25);
+      slv.rotation.z = 0;
     });
   }
 
