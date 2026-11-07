@@ -1,8 +1,7 @@
 {
-  "name": "di-chua-xoa-stress-3d",
+  "name": "di-chua-online",
   "version": "2.0.0",
-  "description": "Đi Chùa Online & Đi Chùa Xõa Stress 3D (Sansa Temple UI/UX × 12 Nhân Vật 3D Naruto & One Piece × Sàn DJ, Đấm Bốc Xả Nghiệp, Đại Mõ Phản Lực)",
-  "main": "server.js",
+  "description": "Đi Chùa Online & Đi Chùa Xõa Stress 3D",
   "scripts": {
     "start": "node server.js",
     "build": "node build.js"
