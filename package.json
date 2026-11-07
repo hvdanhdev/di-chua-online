@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "Đi Chùa Online & Đi Chùa Xõa Stress 3D",
   "scripts": {
-    "start": "node server.js",
+    "start": "node dev-server.js",
     "build": "node build.js"
   },
   "engines": {
